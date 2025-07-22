@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: proxy-service
+
+feature:
+  newMoviesEnabled: false
+
+movies:
+  new:
+    base-url: http://movies-service:8080/api/movies
+  legacy:
+    base-url: http://legacy-monolith:8080/api/metadata

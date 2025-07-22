@@ -32,13 +32,11 @@ User Service
 
 ## 3. Домен подписок и платежей
 
-1. Subscription Service
+Payment Service
 
   * Создание и обновление тарифных планов
   * Промокоды, скидки, trial-периоды
   * Логика включения/отключения доступа к контенту
-2. Payment Service
-
   * Интеграции с платёжными шлюзами (Stripe, Adyen, банки)
   * Обработка транзакций, уведомлений о статусах
   * Взаимодействие с Subscription Service для подтверждения/отклонения доступа
@@ -61,12 +59,10 @@ Catalog Service
 
 ## 5. Домен пользовательских активностей
 
-1. Favorites Service
+Preferences Service
 
   * Добавление/удаление фильмов в «Избранное»
   * Плейлисты и подборки пользователя
-2. Ratings Service
-
   * Оценки и отзывы пользователей
   * История голосований и хара́ктеристик
 
@@ -74,19 +70,7 @@ Catalog Service
 
 ---
 
-## 6. Домен доставки контента
-
-Content Service
-
-* Генерация ссылок на видеопотоки (проксирование, авторизация доступа)
-* Интеграция с S3/CDN для хранения и выдачи медиа
-* Поддержка адаптивного стриминга
-
-*Преимущество:* ответственность за качественную и масштабируемую подачу видео вынесена в отдельный сервис.
-
----
-
-## 7. Домен рекомендаций
+## 6. Домен рекомендаций
 
 Recommendation Adapter
 
@@ -98,7 +82,7 @@ Recommendation Adapter
 
 ---
 
-## 8. Инфраструктурная шина событий
+## 7. Инфраструктурная шина событий
 
 Event Bus (Kafka/RabbitMQ)
 
@@ -122,46 +106,23 @@ Event Bus (Kafka/RabbitMQ)
 * Гибкость интеграций: новые партнёры (маркетплейсы, loyalty‑системы) подключаются через свои адаптеры или слушателей шины.
 
 Диаграмма контейнеров в нотации С4 представлена в следующем файле.
-[ссылка на файл](ссылка)
+[ссылка на файл](diagrams/Container.puml)
 
 # Задание 2
 
 ### 1. Proxy
 Команда КиноБездны уже выделила сервис метаданных о фильмах movies и вам необходимо реализовать бесшовный переход с применением паттерна Strangler Fig в части реализации прокси-сервиса (API Gateway), с помощью которого можно будет постепенно переключать траффик, используя фиче-флаг.
 
+В рамках этого задания был создан Java‑микросервис **proxy-service** в папке ./src/microservices/proxy.
 
-Реализуйте сервис на любом языке программирования в ./src/microservices/proxy.
-Конфигурация для запуска сервиса через docker-compose уже добавлена
-```yaml
-  proxy-service:
-    build:
-      context: ./src/microservices/proxy
-      dockerfile: Dockerfile
-    container_name: cinemaabyss-proxy-service
-    depends_on:
-      - monolith
-      - movies-service
-      - events-service
-    ports:
-      - "8000:8000"
-    environment:
-      PORT: 8000
-      MONOLITH_URL: http://monolith:8080
-      #монолит
-      MOVIES_SERVICE_URL: http://movies-service:8081 #сервис movies
-      EVENTS_SERVICE_URL: http://events-service:8082 
-      GRADUAL_MIGRATION: "true" # вкл/выкл простого фиче-флага
-      MOVIES_MIGRATION_PERCENT: "50" # процент миграции
-    networks:
-      - cinemaabyss-network
-```
+В него включены:
 
-- После реализации запустите postman тесты - они все должны быть зеленые (кроме events).
-- Отправьте запросы к API Gateway:
-   ```bash
-   curl http://localhost:8000/api/movies
-   ```
-- Протестируйте постепенный переход, изменив переменную окружения MOVIES_MIGRATION_PERCENT в файле docker-compose.yml.
+* **pom.xml** с зависимостями Spring Boot, Web, Actuator и OpenFeign;
+* **application.yml** с базовыми настройками и Feature Flag *feature.newMoviesEnabled*;
+* **ProxyApplication** (точка входа);
+* **FeatureConfig** (чтение флага из конфига);
+* **MoviesClient** (Feign‑клиент для нового сервиса movies);
+* **ProxyController** с двумя эндпоинтами /api/movies и /api/movies/{id}, которые по флагу проксируют запросы либо к новому сервису, либо к старому монолиту через RestTemplate.
 
 
 ### 2. Kafka
