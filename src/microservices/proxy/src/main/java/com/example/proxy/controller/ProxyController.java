@@ -1,14 +1,12 @@
 package com.example.proxy.controller;
 
 import com.example.proxy.config.FeatureConfig;
-import com.example.proxy.client.MoviesClient;
-import org.springframework.beans.factory.annotation.Value;
+import com.example.proxy.client.MovieService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
 
@@ -16,37 +14,29 @@ import java.util.Map;
 @RequestMapping("/api/movies")
 public class ProxyController {
 
-    private final FeatureConfig featureConfig;
-    private final MoviesClient moviesClient;
-    private final RestTemplate restTemplate;
-    private final String legacyUrl;
+    private final FeatureConfig feature;
+    private final MovieService service;
 
-    public ProxyController(FeatureConfig featureConfig,
-                           MoviesClient moviesClient,
-                           @Value("${movies.legacy.base-url}") String legacyUrl) {
-        this.featureConfig = featureConfig;
-        this.moviesClient = moviesClient;
-        this.restTemplate = new RestTemplate();
-        this.legacyUrl = legacyUrl;
+    public ProxyController(FeatureConfig feature, MovieService service) {
+        this.feature = feature;
+        this.service = service;
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllMovies() {
-        if (featureConfig.isNewMoviesEnabled()) {
-            return ResponseEntity.ok(moviesClient.getAllMovies());
+    public ResponseEntity<?> getAll() {
+        if (feature.isNewMoviesEnabled()) {
+            Map<String, Object> movies = service.getAllFromNew();
+            return ResponseEntity.ok(movies);
         }
-        // Proxy to legacy
-        Object response = restTemplate.getForObject(legacyUrl, Object.class);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(service.getAllFromLegacy());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getMovieById(@PathVariable String id) {
-        if (featureConfig.isNewMoviesEnabled()) {
-            return ResponseEntity.ok(moviesClient.getMovieById(id));
+    public ResponseEntity<?> getById(@PathVariable String id) {
+        if (feature.isNewMoviesEnabled()) {
+            Map<String, Object> movie = service.getByIdFromNew(id);
+            return ResponseEntity.ok(movie);
         }
-        String url = String.format("%s/%s", legacyUrl, id);
-        Object response = restTemplate.getForObject(url, Object.class);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(service.getByIdFromLegacy(id));
     }
 }
