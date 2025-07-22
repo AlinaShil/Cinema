@@ -1,0 +1,62 @@
+@startuml C4_Container
+!define C4P https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master
+!includeurl C4P/C4_Context.puml
+!includeurl C4P/C4_Container.puml
+!includeurl C4P/C4_Deployment.puml
+
+Person(user, "Пользователь", "Смотрит контент на разных устройствах")
+
+System_Boundary(cinobezdna, "Кинобездна") {
+
+  Container(api_gateway, "API Gateway", "NGINX + OAuth2", "Единая точка входа для всех клиентов, маршрутизация, авторизация, rate limiting")
+  Container(auth_service, "Auth Service", "Go/Spring Boot", "Управление учётными записями, JWT, OAuth2")
+  Container(user_service, "User Service", "Go/Spring Boot", "Профили пользователей, настройки")
+  Container(payment_service, "Payment Service", "Go/Spring Boot", "Обработка подписок, интеграции с платёжными шлюзами")
+  Container(subscription_service, "Subscription Service", "Go/Spring Boot", "Управление подписками, промокодами, скидками")
+  Container(catalog_service, "Catalog Service", "Go/Spring Boot", "Метаданные фильмов (жанры, актёры, описания, оценки)")
+  Container(content_service, "Content Service", "Go/Spring Boot", "Агрегация потоков, ссылки на S3/CDN")
+  Container(favorites_service, "Favorites Service", "Go/Spring Boot", "Избранное пользователя")
+  Container(ratings_service, "Ratings Service", "Go/Spring Boot", "Оценки фильмов пользователями")
+  Container(recommendation_adapter, "Recommendation Adapter", "Go/Spring Boot", "Интеграция с внешней рекомендательной системой (RabbitMQ/Kafka)")
+  Container(event_bus, "Event Bus", "Kafka/RabbitMQ", "Асинхронная шина событий для обмена между микросервисами")
+  ContainerDb(user_db, "User DB", "PostgreSQL", "Сервисная БД пользователей")
+  ContainerDb(payments_db, "Payments DB", "PostgreSQL", "БД платёжных данных")
+  ContainerDb(subs_db, "Subscriptions DB", "PostgreSQL", "БД подписок и скидок")
+  ContainerDb(catalog_db, "Catalog DB", "PostgreSQL", "БД метаданных контента")
+  ContainerDb(fav_db, "Favorites DB", "PostgreSQL", "БД избранного")
+  ContainerDb(ratings_db, "Ratings DB", "PostgreSQL", "БД оценок")
+  Container(storage, "Media Storage", "S3", "Хранилище видео и субтитров")
+}
+
+Rel(user, api_gateway, "HTTPS/REST, WebSockets")
+Rel(api_gateway, auth_service, "REST: аутентификация, авторизация")
+Rel(api_gateway, user_service, "REST: профили")
+Rel(api_gateway, payment_service, "REST: оплата")
+Rel(api_gateway, subscription_service, "REST: подписки")
+Rel(api_gateway, catalog_service, "REST: каталог")
+Rel(api_gateway, content_service, "REST: запуск потоков")
+Rel(api_gateway, favorites_service, "REST: избранное")
+Rel(api_gateway, ratings_service, "REST: оценки")
+
+Rel(auth_service, user_db, "JDBC/SQL")
+Rel(user_service, user_db, "JDBC/SQL")
+Rel(payment_service, payments_db, "JDBC/SQL")
+Rel(subscription_service, subs_db, "JDBC/SQL")
+Rel(catalog_service, catalog_db, "JDBC/SQL")
+Rel(favorites_service, fav_db, "JDBC/SQL")
+Rel(ratings_service, ratings_db, "JDBC/SQL")
+
+Rel(content_service, storage, "S3 API")
+Rel(subscription_service, payment_service, "REST: проверка оплаты")
+Rel(payment_service, subscription_service, "Events: статус подписки", "Kafka/RabbitMQ")
+
+Rel_U(subscription_service, event_bus, "Publish subscription events")
+Rel_U(payment_service, event_bus, "Publish payment events")
+Rel_U(ratings_service, event_bus, "Publish rating events")
+Rel_U(favorites_service, event_bus, "Publish favorite events")
+Rel_U(catalog_service, event_bus, "Publish metadata updates")
+
+Rel_U(recommendation_adapter, event_bus, "Consume user/activity events")
+Rel(recommendation_adapter, api_gateway, "REST: получить рекомендации")
+
+@enduml
