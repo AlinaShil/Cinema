@@ -23,4 +23,5 @@ ARG JAR_FILE=proxy-service-1.0.0.jar
 COPY --from=build /app/target/${JAR_FILE} /app/app.jar
 
 # Устанавливаем точку входа
+ENV SERVER_PORT=8000
 ENTRYPOINT ["java","-jar","/app/app.jar"]
