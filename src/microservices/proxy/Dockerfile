@@ -1,5 +1,5 @@
 # ---------- STAGE 1: Build ----------
-FROM maven:3.8.7-jdk-17 AS build
+FROM maven:3.9.3-eclipse-temurin-17-alpine AS build
 
 # Рабочая директория внутри контейнера
 WORKDIR /app
