@@ -7,9 +7,14 @@ spring:
 
 feature:
   newMoviesEnabled: false
+  newUsersEnabled: false
 
 movies:
   new:
-    base-url: http://movies-service:8080/api/movies
+    base-url: http://movies-service:8081/api/movies
   legacy:
-    base-url: http://legacy-monolith:8080/api/metadata
+    base-url: http://monolith:8000/api/metadata
+
+users:
+  legacy:
+    base-url: http://monolith:8000/api/users
