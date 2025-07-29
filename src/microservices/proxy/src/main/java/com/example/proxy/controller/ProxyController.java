@@ -16,7 +16,7 @@ import java.util.Map;
 public class ProxyController {
 
     private final FeatureConfig feature;
-    private final MovieService service;
+    private final MovieService movieService;
     private final UserService userService;
 
     public ProxyController(FeatureConfig feature, MovieService service) {
