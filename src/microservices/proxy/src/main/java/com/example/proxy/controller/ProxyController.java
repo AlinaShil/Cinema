@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/movies")
+@RequestMapping("/api")
 public class ProxyController {
 
     private final FeatureConfig feature;
@@ -28,7 +28,7 @@ public class ProxyController {
         this.userService = userService;         // <- присвоение
     }
 
-    @GetMapping
+    @GetMapping("/movies")
     public ResponseEntity<?> getAll() {
         if (feature.isNewMoviesEnabled()) {
             Map<String, Object> movies = movieService.getAllFromNew();
@@ -37,7 +37,7 @@ public class ProxyController {
         return ResponseEntity.ok(movieService.getAllFromLegacy());
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/movies/{id}")
     public ResponseEntity<?> getById(@PathVariable String id) {
         if (feature.isNewMoviesEnabled()) {
             Map<String, Object> movie = movieService.getByIdFromNew(id);
@@ -46,7 +46,7 @@ public class ProxyController {
         return ResponseEntity.ok(movieService.getByIdFromLegacy(id));
     }
 
-    @GetMapping("/api/users")
+    @GetMapping("/users")
     public ResponseEntity<?> getAllUsers() {
         Object users = feature.isNewUsersEnabled()
                 ? userService.getAllFromNew()
