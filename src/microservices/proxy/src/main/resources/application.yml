@@ -13,7 +13,7 @@ movies:
   new:
     base-url: http://movies-service:8081/api/movies
   legacy:
-    base-url: http://monolith:8080/api/metadata
+    base-url: http://monolith:8080/api/movies
 
 users:
   legacy:

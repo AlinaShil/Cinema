@@ -39,4 +39,12 @@ public class ProxyController {
         }
         return ResponseEntity.ok(service.getByIdFromLegacy(id));
     }
+
+    @GetMapping("/api/users")
+    public ResponseEntity<?> getAllUsers() {
+        Object users = feature.isNewUsersEnabled()
+                ? userService.getAllFromNew()
+                : userService.getAllFromLegacy();
+        return ResponseEntity.ok(users);
+    }
 }
