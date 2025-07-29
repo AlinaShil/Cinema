@@ -132,7 +132,7 @@ jobs:
       - name: Run API Tests
         run: |                                                        
           npm install -g newman                                      
-          newman run ./tests/postman/Cinema.postman_collection.json \ 
+          newman run ./tests/postman/CinemaAbyss.postman_collection.json \ 
             --env-var "baseMonolith=http://localhost:8080" \       
             --env-var "baseMovies=http://localhost:8081" \         
             --env-var "baseEvents=http://localhost:8082" \         
