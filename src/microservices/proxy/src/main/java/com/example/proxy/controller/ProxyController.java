@@ -19,10 +19,6 @@ public class ProxyController {
     private final MovieService movieService;
     private final UserService userService;
 
-    public ProxyController(FeatureConfig feature, MovieService service) {
-        this.feature = feature;
-        this.service = service;
-    }
 
     public ProxyController(FeatureConfig feature,
                            MovieService movieService,
