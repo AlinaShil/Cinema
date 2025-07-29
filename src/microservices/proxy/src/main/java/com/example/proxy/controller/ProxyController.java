@@ -2,6 +2,7 @@ package com.example.proxy.controller;
 
 import com.example.proxy.config.FeatureConfig;
 import com.example.proxy.client.MovieService;
+import com.example.proxy.client.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,10 +17,19 @@ public class ProxyController {
 
     private final FeatureConfig feature;
     private final MovieService service;
+    private final UserService userService;
 
     public ProxyController(FeatureConfig feature, MovieService service) {
         this.feature = feature;
         this.service = service;
+    }
+
+    public ProxyController(FeatureConfig feature,
+                           MovieService movieService,
+                           UserService userService) {
+        this.feature = feature;
+        this.movieService = movieService;
+        this.userService = userService;         // <- присвоение
     }
 
     @GetMapping
