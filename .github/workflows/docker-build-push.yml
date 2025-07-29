@@ -130,8 +130,8 @@ jobs:
 
       - name: Start services via Docker Compose
         run: |
-          docker-compose pull
-          docker-compose up -d zookeeper kafka monolith movies-service events-service proxy-service
+          docker compose pull
+          docker compose up -d zookeeper kafka monolith movies-service events-service proxy-service
           sleep 30
 
       # API Tests
