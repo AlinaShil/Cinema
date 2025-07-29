@@ -31,19 +31,19 @@ public class ProxyController {
     @GetMapping
     public ResponseEntity<?> getAll() {
         if (feature.isNewMoviesEnabled()) {
-            Map<String, Object> movies = service.getAllFromNew();
+            Map<String, Object> movies = movieService.getAllFromNew();
             return ResponseEntity.ok(movies);
         }
-        return ResponseEntity.ok(service.getAllFromLegacy());
+        return ResponseEntity.ok(movieService.getAllFromLegacy());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable String id) {
         if (feature.isNewMoviesEnabled()) {
-            Map<String, Object> movie = service.getByIdFromNew(id);
+            Map<String, Object> movie = movieService.getByIdFromNew(id);
             return ResponseEntity.ok(movie);
         }
-        return ResponseEntity.ok(service.getByIdFromLegacy(id));
+        return ResponseEntity.ok(movieService.getByIdFromLegacy(id));
     }
 
     @GetMapping("/api/users")
