@@ -1,71 +1,69 @@
 name: API Tests
 
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to run tests against'
-        required: true
-        default: 'docker'
-        type: choice
-        options:
-          - local
-          - docker
-      test_folder:
-        description: 'Test folder to run (leave empty for all)'
-        required: false
-        type: string
+  workflow_run:
+    workflows: ["Docker Build and Push"]
+    types: [completed]
+
+permissions:
+  contents: read
+  packages: read
 
 jobs:
-  api-tests:
-    name: Run API Tests
+  test:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Set up Docker Compose
-        run: |
-          docker compose --version
-      
-      - name: Start services with Docker Compose
-        run: |
-          docker compose up -d
-          # Wait for services to be ready
-          echo "Waiting for services to be ready..."
-          sleep 120
-      
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: tests/postman/package-lock.json
-      
-      - name: Install Newman and dependencies
-        working-directory: tests/postman
-        run: npm install
-      
-      - name: Run API tests
-        working-directory: tests/postman
-        run: |
+          node-version: '20'
 
-          docker compose up -d
-          # Wait for services to be ready
-          echo "Waiting for services to be ready..."
-          sleep 15
-          # Build the Docker image
-          docker build -t cinemaabyss-api-tests .
-          
-          # Run the tests in Docker
-          docker run --network=cinemaabyss-network -v "$(pwd)/reports:/app/reports" cinemaabyss-api-tests
-        
-      
-      - name: Stop services
-        if: always()
-        run: docker compose down
+      - name: Log in to GitHub Container Registry (GHCR)
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Start services via Docker Compose
+        run: |
+          set -euo pipefail
+          docker compose pull
+          docker compose up -d zookeeper kafka monolith movies-service events-service proxy-service
+
+          echo "=== Waiting for services to become healthy ==="
+          max=30
+          attempt=0
+          until curl -fs http://localhost:8080/health && \
+                curl -fs http://localhost:8081/api/movies/health && \
+                curl -fs http://localhost:8082/api/events/health && \
+                curl -fs http://localhost:8000/health; do
+            attempt=$((attempt+1))
+            echo "Attempt $attempt/${max} - services not ready yet"
+            if [ "$attempt" -ge "$max" ]; then
+              echo "ERROR: services did not become ready in time"
+              docker compose ps
+              docker compose logs --tail=100
+              exit 1
+            fi
+            sleep 5
+          done
+          echo "All services are up"
+
+      - name: Debug endpoints
+        run: |
+          echo "Monolith /health:"; curl -i http://localhost:8080/health  true
+          echo "Movies /health:"; curl -i http://localhost:8081/api/movies/health  true
+          echo "Events /health:"; curl -i http://localhost:8082/api/events/health  true
+          echo "Proxy /health:"; curl -i http://localhost:8000/health  true
+
+      - name: Run API Tests
+        run: |
+          npm install -g newman
+          newman run ./tests/postman/CinemaAbyss.postman_collection.json \
+            --env-var "baseMonolith=http://localhost:8080" \
+            --env-var "baseMovies=http://localhost:8081" \
+            --env-var "baseEvents=http://localhost:8082" \
+            --env-var "baseProxy=http://localhost:8000" \
+            --timeout-request 10000

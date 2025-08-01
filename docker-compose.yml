@@ -63,6 +63,11 @@ services:
     environment:
       PORT: 8080
       DB_CONNECTION_STRING: postgres://postgres:postgres_password@postgres:5432/cinemaabyss?sslmode=disable
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/health  exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - cinemaabyss-network
 
@@ -79,6 +84,11 @@ services:
     environment:
       PORT: 8081
       DB_CONNECTION_STRING: postgres://postgres:postgres_password@postgres:5432/cinemaabyss?sslmode=disable
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8081/api/movies/health  exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - cinemaabyss-network
 
