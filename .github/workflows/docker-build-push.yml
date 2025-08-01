@@ -13,9 +13,9 @@ on:
 env:
   REGISTRY: ghcr.io
   MONOLITH_IMAGE_NAME: ${{ github.repository }}/monolith
-  MOVIES_SERVICE_IMAGE_NAME: ${{ github.repository }}/movies-service
-  EVENTS_SERVICE_IMAGE_NAME: ${{ github.repository }}/events-service
-  PROXY_SERVICE_IMAGE_NAME: ${{ github.repository }}/proxy-service
+  MOVIES_SERVICE_IMAGE_NAME: ${{ github.repository }}/microservices/movies-service
+  EVENTS_SERVICE_IMAGE_NAME: ${{ github.repository }}/microservices/events-service
+  PROXY_SERVICE_IMAGE_NAME: ${{ github.repository }}/microservices/proxy-service
 
 jobs:
   build-and-push:
@@ -132,7 +132,17 @@ jobs:
         run: |
           docker compose pull
           docker compose up -d zookeeper kafka monolith movies-service events-service proxy-service
-          sleep 30
+          echo "Waiting for services to become healthy..."
+            for i in {1..30}; do
+              if curl -fs http://localhost:8080/health && \
+                 curl -fs http://localhost:8081/api/movies/health && \
+                 curl -fs http://localhost:8082/api/events/health && \
+                 curl -fs http://localhost:8000/health; then
+                 echo "All services are up"
+                 break
+              fi
+              sleep 5
+            done
 
       # API Tests
       - name: Run API Tests
