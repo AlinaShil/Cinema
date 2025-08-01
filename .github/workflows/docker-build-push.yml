@@ -119,10 +119,13 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Trigger API Tests workflow
-        uses: peter-evans/workflow-dispatch@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.repository }}
-          workflow: api-tests.yml
-          ref: cinema
+      - name: Trigger API Tests workflow via REST API
+        env:
+          REPO: ${{ github.repository }}
+        run: |
+          echo "Dispatching api-tests.yml on branch cinema"
+          curl -s -S -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/${REPO}/actions/workflows/api-tests.yml/dispatches \
+            -d '{"ref":"cinema"}'
