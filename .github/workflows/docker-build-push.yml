@@ -118,3 +118,11 @@ jobs:
           labels: ${{ steps.meta-proxy.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Trigger API Tests workflow
+        uses: peter-evans/workflow-dispatch@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          workflow: api-tests.yml
+          ref: cinema
