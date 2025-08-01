@@ -117,7 +117,7 @@ Event Bus (Kafka/RabbitMQ)
 
 В него включены:
 
-* **pom.xml** с зависимостями Spring Boot, Web, Actuator и OpenFeign;
+* **pom.xml** с зависимостями Spring Boot, Web, Actuator и OpenFeign
 * **application.yml** с базовыми настройками и Feature Flag *feature.newMoviesEnabled*;
 * **ProxyApplication** (точка входа);
 * **FeatureConfig** (чтение флага из конфига);
