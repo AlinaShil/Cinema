@@ -12,21 +12,24 @@ permissions:
   actions: read
 
 jobs:
-  run-api-tests:
+  api-tests:
+    # запускается вручную или после успешного Docker Build and Push
+    if: ${{ github.event_name != 'workflow_run'  github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Log in to GHCR (если образы в GHCR)
+      - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
       - name: Start services via Docker Compose and wait for readiness
         run: |
           set -euo pipefail
+
           docker compose pull
-          docker compose up -d zookeeper kafka monolith movies-service events-service proxy-service
+          docker compose up -d zookeeper kafka postgres monolith movies-service events-service proxy-service
 
           echo "=== Waiting for services to become healthy ==="
           max=30
@@ -60,16 +63,22 @@ jobs:
             sleep 5
           done
 
+      - name: Debug endpoints
+        run: |
+          echo "=== Final sanity checks ==="
+          echo "Monolith /health:"; curl -i http://localhost:8080/health  true
+          echo "Movies /api/movies/health:"; curl -i http://localhost:8081/api/movies/health  true
+          echo "Events /api/events/health:"; curl -i http://localhost:8082/api/events/health  true
+          echo "Proxy /health:"; curl -i http://localhost:8000/health || true
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: Install Newman
-        run: npm install -g newman
-
-      - name: Run API tests
+      - name: Run API Tests
         run: |
+          npm install -g newman
           newman run tests/postman/CinemaAbyss.postman_collection.json \
             --env-var "baseMonolith=http://localhost:8080" \
             --env-var "baseMovies=http://localhost:8081" \
