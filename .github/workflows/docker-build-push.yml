@@ -52,7 +52,7 @@ jobs:
       - name: Build and push Monolith image
         uses: docker/build-push-action@v4
         with:
-          context: ./src/microservices/monolith
+          context: ./src/monolith
           push: true
           tags: ${{ steps.meta-monolith.outputs.tags }}
           labels: ${{ steps.meta-monolith.outputs.labels }}
