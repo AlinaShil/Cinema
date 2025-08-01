@@ -9,28 +9,22 @@ on:
 permissions:
   contents: read
   packages: read
+  actions: read
 
 jobs:
-  api-tests:
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+  run-api-tests:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Log in to GitHub Container Registry
+      - name: Log in to GHCR (если образы в GHCR)
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
       - name: Start services via Docker Compose and wait for readiness
         run: |
           set -euo pipefail
-
           docker compose pull
           docker compose up -d zookeeper kafka monolith movies-service events-service proxy-service
 
@@ -40,41 +34,18 @@ jobs:
           while true; do
             ((attempt++))
             echo "--- attempt $attempt/$max ---"
+            ok=true
 
-            monolith_ok=false
-            movies_ok=false
-            events_ok=false
-            proxy_ok=false
+            for url in http://localhost:8080/health http://localhost:8081/api/movies/health http://localhost:8082/api/events/health http://localhost:8000/health; do
+              if curl -fs "$url" >/dev/null 2>&1; then
+                echo "$url OK"
+              else
+                echo "$url DOWN"
+                ok=false
+              fi
+            done
 
-            if curl -fs http://localhost:8080/health >/dev/null 2>&1; then
-              monolith_ok=true
-              echo "monolith /health OK"
-            else
-              echo "monolith /health DOWN"
-            fi
-
-            if curl -fs http://localhost:8081/api/movies/health >/dev/null 2>&1; then
-              movies_ok=true
-              echo "movies-service /api/movies/health OK"
-            else
-              echo "movies-service /api/movies/health DOWN"
-            fi
-
-            if curl -fs http://localhost:8082/api/events/health >/dev/null 2>&1; then
-              events_ok=true
-              echo "events-service /api/events/health OK"
-            else
-              echo "events-service /api/events/health DOWN"
-            fi
-
-            if curl -fs http://localhost:8000/health >/dev/null 2>&1; then
-              proxy_ok=true
-              echo "proxy-service /health OK"
-            else
-              echo "proxy-service /health DOWN"
-            fi
-
-            if [[ "$monolith_ok" == "true" && "$movies_ok" == "true" && "$events_ok" == "true" && "$proxy_ok" == "true" ]]; then
+            if [ "$ok" = true ]; then
               echo "All services are up"
               break
             fi
@@ -89,18 +60,17 @@ jobs:
             sleep 5
           done
 
-      - name: Debug endpoints
-        run: |
-          echo "=== Final sanity checks ==="
-          echo "Monolith /health:"; curl -i http://localhost:8080/health  true
-          echo "Movies /api/movies/health:"; curl -i http://localhost:8081/api/movies/health  true
-          echo "Events /api/events/health:"; curl -i http://localhost:8082/api/events/health  true
-          echo "Proxy /health:"; curl -i http://localhost:8000/health || true
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
 
-      - name: Run API Tests
+      - name: Install Newman
+        run: npm install -g newman
+
+      - name: Run API tests
         run: |
-          npm install -g newman
-          newman run ./tests/postman/CinemaAbyss.postman_collection.json \
+          newman run tests/postman/CinemaAbyss.postman_collection.json \
             --env-var "baseMonolith=http://localhost:8080" \
             --env-var "baseMovies=http://localhost:8081" \
             --env-var "baseEvents=http://localhost:8082" \
