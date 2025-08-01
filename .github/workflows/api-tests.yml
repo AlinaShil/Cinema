@@ -5,18 +5,20 @@ on:
     workflows: ["Docker Build and Push"]
     types: [completed]
   workflow_dispatch:
+  push:
+    branches: [ cinema ]
 
 permissions:
   contents: read
   packages: read
 
 jobs:
-  test:
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+  api-tests:
+    if: ${{ github.event_name != 'workflow_run'  github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Set up Node.js
@@ -24,40 +26,78 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Log in to GitHub Container Registry (GHCR)
+      - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-      - name: Start services via Docker Compose
+      - name: Start services via Docker Compose and wait for readiness
         run: |
           set -euo pipefail
+
           docker compose pull
           docker compose up -d zookeeper kafka monolith movies-service events-service proxy-service
 
           echo "=== Waiting for services to become healthy ==="
           max=30
           attempt=0
-          until curl -fs http://localhost:8080/health && \
-                curl -fs http://localhost:8081/api/movies/health && \
-                curl -fs http://localhost:8082/api/events/health && \
-                curl -fs http://localhost:8000/health; do
-            attempt=$((attempt+1))
-            echo "Attempt $attempt/${max} - services not ready yet"
+          while true; do
+            ((attempt++))
+            echo "--- attempt $attempt/$max ---"
+
+            monolith_ok=false
+            movies_ok=false
+            events_ok=false
+            proxy_ok=false
+
+            if curl -fs http://localhost:8080/health >/dev/null 2>&1; then
+              monolith_ok=true
+              echo "monolith /health OK"
+            else
+              echo "monolith /health DOWN"
+            fi
+
+            if curl -fs http://localhost:8081/api/movies/health >/dev/null 2>&1; then
+              movies_ok=true
+              echo "movies-service /api/movies/health OK"
+            else
+              echo "movies-service /api/movies/health DOWN"
+            fi
+
+            if curl -fs http://localhost:8082/api/events/health >/dev/null 2>&1; then
+              events_ok=true
+              echo "events-service /api/events/health OK"
+            else
+              echo "events-service /api/events/health DOWN"
+            fi
+
+            if curl -fs http://localhost:8000/health >/dev/null 2>&1; then
+              proxy_ok=true
+              echo "proxy-service /health OK"
+            else
+              echo "proxy-service /health DOWN"
+            fi
+
+            if [[ "$monolith_ok" == "true" && "$movies_ok" == "true" && "$events_ok" == "true" && "$proxy_ok" == "true" ]]; then
+              echo "All services are up"
+              break
+            fi
+
             if [ "$attempt" -ge "$max" ]; then
               echo "ERROR: services did not become ready in time"
               docker compose ps
-              docker compose logs --tail=100
+              docker compose logs --tail=100 monolith movies-service events-service proxy-service
               exit 1
             fi
+
             sleep 5
           done
-          echo "All services are up"
 
       - name: Debug endpoints
         run: |
+          echo "=== Final sanity checks ==="
           echo "Monolith /health:"; curl -i http://localhost:8080/health  true
-          echo "Movies /health:"; curl -i http://localhost:8081/api/movies/health  true
-          echo "Events /health:"; curl -i http://localhost:8082/api/events/health  true
-          echo "Proxy /health:"; curl -i http://localhost:8000/health  true
+          echo "Movies /api/movies/health:"; curl -i http://localhost:8081/api/movies/health  true
+          echo "Events /api/events/health:"; curl -i http://localhost:8082/api/events/health  true
+          echo "Proxy /health:"; curl -i http://localhost:8000/health || true
 
       - name: Run API Tests
         run: |
@@ -68,3 +108,7 @@ jobs:
             --env-var "baseEvents=http://localhost:8082" \
             --env-var "baseProxy=http://localhost:8000" \
             --timeout-request 10000
+
+      - name: Tear down
+        if: always()
+        run: docker compose down
