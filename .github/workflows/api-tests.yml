@@ -37,16 +37,32 @@ jobs:
           echo "=== Waiting for services to become healthy ==="
           max=30
           attempt=0
-          while true; do
+          while :; do
             ((attempt++))
             echo "--- attempt $attempt/$max ---"
             ok=true
 
-            for url in http://localhost:8080/health http://localhost:8081/api/movies/health http://localhost:8082/api/events/health http://localhost:8000/health; do
+            # Проверяем по очереди
+            for name in monolith movies-service events-service proxy-service; do
+              case "$name" in
+                monolith)
+                  url="http://localhost:8080/health"
+                  ;;
+                movies-service)
+                  url="http://localhost:8081/api/movies/health"
+                  ;;
+                events-service)
+                  url="http://localhost:8082/api/events/health"
+                  ;;
+                proxy-service)
+                  url="http://localhost:8000/health"
+                  ;;
+              esac
+  
               if curl -fs "$url" >/dev/null 2>&1; then
-                echo "$url OK"
+                echo "$name ($url) OK"
               else
-                echo "$url DOWN"
+                echo "$name ($url) DOWN"
                 ok=false
               fi
             done
