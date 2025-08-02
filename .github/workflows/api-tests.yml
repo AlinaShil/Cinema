@@ -38,14 +38,6 @@ jobs:
           echo "Waiting for services to be ready..."
           sleep 120
 
-      - name: Debug endpoints
-        run: |
-          echo "=== Final sanity checks ==="
-          echo "Movies /api/movies/health:"; curl -i http://localhost:8081/api/movies/health  true
-          echo "Events /api/events/health:"; curl -i http://localhost:8082/api/events/health  true
-          echo "Proxy /health:"; curl -i http://localhost:8000/health || true
-          echo "Monolith /health:"; curl -i http://localhost:8080/health  true
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
