@@ -25,7 +25,7 @@ jobs:
 
       - name: Start services via Docker Compose and wait for readiness
         run: |
-          set -euo pipefail
+          set -eo pipefail
           set -x  # включить печать команд
 
           # Обязательно подтягиваем свежие образы
