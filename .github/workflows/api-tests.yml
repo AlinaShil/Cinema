@@ -30,7 +30,7 @@ jobs:
           # Обязательно подтягиваем свежие образы
           docker compose pull
 
-          # Поднимаем стек, с принудительным pull (если поддерживается)
+          # Поднимаем стек с принудительным pull (если поддерживается)
           docker compose up --pull=always -d zookeeper kafka postgres monolith movies-service events-service proxy-service
 
           echo "=== Waiting for services to become healthy ==="
