@@ -13,8 +13,7 @@ permissions:
 
 jobs:
   api-tests:
-    # запускается вручную или после успешного Docker Build and Push
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name != 'workflow_run'  github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -28,8 +27,11 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Обязательно подтягиваем свежие образы
           docker compose pull
-          docker compose up -d zookeeper kafka postgres monolith movies-service events-service proxy-service
+
+          # Поднимаем стек, с принудительным pull (если поддерживается)
+          docker compose up --pull=always -d zookeeper kafka postgres monolith movies-service events-service proxy-service
 
           echo "=== Waiting for services to become healthy ==="
           max=30
