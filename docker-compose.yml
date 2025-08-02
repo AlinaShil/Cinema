@@ -52,7 +52,7 @@ services:
 
   # Monolith Service
   monolith:
-    image: ghcr.io/AlinaShil/Cinema/monolith:latest
+    image: ghcr.io/alinashil/cinema/monolith:latest
     container_name: cinemaabyss-monolith
     depends_on:
       - postgres
@@ -71,7 +71,7 @@ services:
 
   # Movies Microservice
   movies-service:
-    image: ghcr.io/AlinaShil/Cinema/movies-service:latest
+    image: ghcr.io/alinashil/cinema/movies-service:latest
     container_name: cinemaabyss-movies-service
     depends_on:
       - postgres
@@ -90,7 +90,7 @@ services:
 
   # Events Microservice
   events-service:
-    image: ghcr.io/AlinaShil/Cinema/events-service:latest
+    image: ghcr.io/alinashil/cinema/events-service:latest
     container_name: cinemaabyss-events-service
     depends_on:
       - postgres
@@ -105,7 +105,7 @@ services:
 
   # Proxy Service (API Gateway)
   proxy-service:
-    image: ghcr.io/AlinaShil/Cinema/proxy-service:latest
+    image: ghcr.io/alinashil/cinema/proxy-service:latest
     container_name: cinemaabyss-proxy-service
     depends_on:
       - monolith
