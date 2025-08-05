@@ -23,6 +23,8 @@ spec:
       labels:
         app: events-service
     spec:
+      imagePullSecrets:
+      - name: dockerconfigjson
       containers:
       - name: events-service
         image: {{ .Values.eventsService.image.repository }}:{{ .Values.eventsService.image.tag }}
@@ -53,9 +55,6 @@ spec:
             port: {{ .Values.eventsService.service.targetPort }}
           initialDelaySeconds: 15
           periodSeconds: 20
-        restartPolicy: Always
-        imagePullSecrets:
-          - name: dockerconfigjson
 ---
 apiVersion: v1
 kind: Service

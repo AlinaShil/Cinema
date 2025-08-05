@@ -23,6 +23,8 @@ spec:
       labels:
         app: proxy-service
     spec:
+      imagePullSecrets:
+      - name: dockerconfigjson
       containers:
       - name: proxy-service
         image: {{ .Values.proxyService.image.repository }}:{{ .Values.proxyService.image.tag }}
@@ -53,9 +55,7 @@ spec:
             port: {{ .Values.proxyService.service.targetPort }}
           initialDelaySeconds: 15
           periodSeconds: 20
-        restartPolicy: Always
-        imagePullSecrets:
-          - name: dockerconfigjson
+
 ---
 apiVersion: v1
 kind: Service
