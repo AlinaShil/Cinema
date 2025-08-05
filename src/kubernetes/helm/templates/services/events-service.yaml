@@ -24,7 +24,7 @@ spec:
         app: events-service
     spec:
       imagePullSecrets:
-      - name: dockerconfigsecret
+      - name: dockerconfigjson
       containers:
       - name: events-service
         image: {{ .Values.eventsService.image.repository }}:{{ .Values.eventsService.image.tag }}
