@@ -40,7 +40,7 @@ spec:
         - secretRef:
             name: cinemaabyss-secrets
         resources:
-          {{ - toYaml .Values.proxyService.resources | nindent 10 }}
+          {{- toYaml .Values.proxyService.resources | nindent 10 }}
         readinessProbe:
           httpGet:
             path: /api/proxy/health
