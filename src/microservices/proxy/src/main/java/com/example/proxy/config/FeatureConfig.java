@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 public class FeatureConfig {
     private boolean newMoviesEnabled;
     private boolean newUsersEnabled;
-    /** Процент трафика, который идет в новый сервис movies */
+    /** Процент трафика в новый сервис movies */
     private int moviesMigrationPercent;
 
     public boolean isNewMoviesEnabled() {
