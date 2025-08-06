@@ -20,6 +20,8 @@ spec:
       labels:
         app: proxy-service
     spec:
+      imagePullSecrets:
+        - name: dockerconfigjson
       containers:
         - name: proxy-service
           image: ghcr.io/alinashil/cinema/proxy-service:latest
@@ -56,8 +58,6 @@ spec:
             initialDelaySeconds: 15
             periodSeconds: 20
       restartPolicy: Always
-      imagePullSecrets:
-        - name: dockerconfigjson
 ---
 apiVersion: v1
 kind: Service

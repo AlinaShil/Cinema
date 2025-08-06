@@ -20,6 +20,8 @@ spec:
       labels:
         app: events-service
     spec:
+      imagePullSecrets:
+        - name: dockerconfigjson
       containers:
         - name: events-service
           image: ghcr.io/alinashil/cinema/events-service:latest
@@ -56,8 +58,6 @@ spec:
             initialDelaySeconds: 15
             periodSeconds: 20
       restartPolicy: Always
-      imagePullSecrets:
-        - name: dockerconfigjson
 ---
 apiVersion: v1
 kind: Service
