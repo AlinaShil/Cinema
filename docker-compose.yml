@@ -120,8 +120,9 @@ services:
       MONOLITH_URL: http://monolith:8080
       MOVIES_SERVICE_URL: http://movies-service:8081
       EVENTS_SERVICE_URL: http://events-service:8082
-      FEATURE_GRADUAL_MIGRATION: "true"
+      FEATURE_NEW_MOVIES_ENABLED: "true"
       FEATURE_MOVIES_MIGRATION_PERCENT: "50"
+      FEATURE_NEW_USERS_ENABLED: "false"
     networks:
       - cinemaabyss-network
 
