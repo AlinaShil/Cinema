@@ -20,8 +20,6 @@ spec:
       labels:
         app: monolith
     spec:
-      imagePullSecrets:
-        - name: dockerconfigjson
       containers:
       - name: monolith
         image:  ghcr.io/alinashil/cinema/monolith:latest
@@ -57,6 +55,8 @@ spec:
             port: 8080
           initialDelaySeconds: 15
           periodSeconds: 20
+      imagePullSecrets:
+        - name: dockerconfigjson
       restartPolicy: Always
 ---
 apiVersion: v1
