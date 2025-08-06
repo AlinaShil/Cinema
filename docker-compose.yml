@@ -55,7 +55,9 @@ services:
     image: ghcr.io/alinashil/cinema/monolith:latest
     container_name: cinemaabyss-monolith
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    restart: on-failure
     ports:
       - "8080:8080"
     environment:
