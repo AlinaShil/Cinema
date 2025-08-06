@@ -120,6 +120,9 @@ services:
       MONOLITH_URL: http://monolith:8080
       MOVIES_SERVICE_URL: http://movies-service:8081
       EVENTS_SERVICE_URL: http://events-service:8082
+      MOVIES_NEW_BASE_URL: http://movies-service:8081/api/movies
+      MOVIES_LEGACY_BASE_URL: http://monolith:8080/api/movies
+      USERS_LEGACY_BASE_URL: http://monolith:8080/api/users
       FEATURE_NEW_MOVIES_ENABLED: "true"
       FEATURE_MOVIES_MIGRATION_PERCENT: "50"
       FEATURE_NEW_USERS_ENABLED: "false"
