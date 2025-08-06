@@ -32,7 +32,11 @@ public class ProxyController {
     public ResponseEntity<?> getAll() {
         if (feature.isNewMoviesEnabled()) {
             Map<String, Object> movies = movieService.getAllFromNew();
-            return ResponseEntity.ok(movies);
+            int pct = feature.getMoviesMigrationPercent();
+            int rnd = ThreadLocalRandom.current().nextInt(100);
+            if (rnd<pct) {
+                return ResponseEntity.ok(movieService.getAllFromNew());
+            }
         }
         return ResponseEntity.ok(movieService.getAllFromLegacy());
     }
