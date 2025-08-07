@@ -57,13 +57,4 @@ public class ProxyController {
 
         return ResponseEntity.ok(result);
     }
-
-    @GetMapping("/users/{id}")
-    public ResponseEntity<Map<String, Object>> getUserById(@PathVariable String id) {
-        Map<String, Object> result = feature.isNewUsersEnabled()
-                ? userService.getByIdFromNew(id)
-                : userService.getByIdFromLegacy(id);
-
-        return ResponseEntity.ok(result);
-    }
 }
