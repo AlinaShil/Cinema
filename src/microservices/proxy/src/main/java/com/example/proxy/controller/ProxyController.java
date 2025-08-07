@@ -48,10 +48,10 @@ public class ProxyController {
     }
 
     @GetMapping("/users")
-    public ResponseEntity<List<Map<String, Object>>> getAllUsers() {
+    public ResponseEntity<?> getAllUsers() {
         boolean useNew = feature.isNewUsersEnabled();
 
-        List<Map<String, Object>> result = useNew
+        Object result = useNew
                 ? userService.getAllFromNew()
                 : userService.getAllFromLegacy();
 
