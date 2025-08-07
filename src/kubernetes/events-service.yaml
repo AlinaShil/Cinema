@@ -58,7 +58,6 @@ spec:
       restartPolicy: Always
       imagePullSecrets:
         - name: dockerconfigjson
-
 ---
 apiVersion: v1
 kind: Service

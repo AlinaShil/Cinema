@@ -71,7 +71,7 @@ services:
     networks:
       - cinemaabyss-network
 
-  # Movies Service
+  # Movies Microservice
   movies-service:
     image: ghcr.io/alinashil/cinema/movies-service:latest
     container_name: cinemaabyss-movies-service
