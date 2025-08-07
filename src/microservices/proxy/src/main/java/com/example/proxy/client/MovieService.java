@@ -1,9 +1,13 @@
 package com.example.proxy.client;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.ResponseEntity;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -20,19 +24,33 @@ public class MovieService {
         this.legacyUrl = legacyUrl;
     }
 
-    public Map<String, Object> getAllFromNew() {
-        return rest.getForObject(newUrl, Map.class);
+    // Возвращаем список фильмов
+    public List<Map<String, Object>> getAllFromNew() {
+        ResponseEntity<List<Map<String,Object>>> resp = rest.exchange(
+                newUrl,
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {}
+        );
+        return resp.getBody();
     }
 
     public Map<String, Object> getByIdFromNew(String id) {
         return rest.getForObject(newUrl + "/" + id, Map.class);
     }
 
-    public Object getAllFromLegacy() {
-        return rest.getForObject(legacyUrl, Object.class);
+    // То же для legacy
+    public List<Map<String, Object>> getAllFromLegacy() {
+        ResponseEntity<List<Map<String,Object>>> resp = rest.exchange(
+                legacyUrl,
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {}
+        );
+        return resp.getBody();
     }
 
-    public Object getByIdFromLegacy(String id) {
-        return rest.getForObject(legacyUrl + "/" + id, Object.class);
+    public Map<String, Object> getByIdFromLegacy(String id) {
+        return rest.getForObject(legacyUrl + "/" + id, Map.class);
     }
 }
