@@ -4,11 +4,9 @@ import com.example.proxy.config.FeatureConfig;
 import com.example.proxy.client.MovieService;
 import com.example.proxy.client.UserService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -20,41 +18,52 @@ public class ProxyController {
     private final MovieService movieService;
     private final UserService userService;
 
-
     public ProxyController(FeatureConfig feature,
                            MovieService movieService,
                            UserService userService) {
         this.feature = feature;
         this.movieService = movieService;
-        this.userService = userService;         // <- присвоение
+        this.userService = userService;
     }
 
     @GetMapping("/movies")
-    public ResponseEntity<?> getAll() {
-        if (feature.isNewMoviesEnabled()) {
-            int pct = feature.getMoviesMigrationPercent();
-            int rnd = ThreadLocalRandom.current().nextInt(100);
-            if (rnd<pct) {
-                return ResponseEntity.ok(movieService.getAllFromNew());
-            }
-        }
-        return ResponseEntity.ok(movieService.getAllFromLegacy());
+    public ResponseEntity<List<Map<String, Object>>> getAllMovies() {
+        boolean useNew = feature.isNewMoviesEnabled()
+                && ThreadLocalRandom.current().nextInt(100) < feature.getMoviesMigrationPercent();
+
+        List<Map<String, Object>> result = useNew
+                ? movieService.getAllFromNew()
+                : movieService.getAllFromLegacy();
+
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/movies/{id}")
-    public ResponseEntity<?> getById(@PathVariable String id) {
-        if (feature.isNewMoviesEnabled()) {
-            Map<String, Object> movie = movieService.getByIdFromNew(id);
-            return ResponseEntity.ok(movie);
-        }
-        return ResponseEntity.ok(movieService.getByIdFromLegacy(id));
+    public ResponseEntity<Map<String, Object>> getMovieById(@PathVariable String id) {
+        Map<String, Object> result = feature.isNewMoviesEnabled()
+                ? movieService.getByIdFromNew(id)
+                : movieService.getByIdFromLegacy(id);
+
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/users")
-    public ResponseEntity<?> getAllUsers() {
-        Object users = feature.isNewUsersEnabled()
+    public ResponseEntity<List<Map<String, Object>>> getAllUsers() {
+        boolean useNew = feature.isNewUsersEnabled();
+
+        List<Map<String, Object>> result = useNew
                 ? userService.getAllFromNew()
                 : userService.getAllFromLegacy();
-        return ResponseEntity.ok(users);
+
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/users/{id}")
+    public ResponseEntity<Map<String, Object>> getUserById(@PathVariable String id) {
+        Map<String, Object> result = feature.isNewUsersEnabled()
+                ? userService.getByIdFromNew(id)
+                : userService.getByIdFromLegacy(id);
+
+        return ResponseEntity.ok(result);
     }
 }
