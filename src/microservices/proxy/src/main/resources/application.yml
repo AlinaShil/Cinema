@@ -1,0 +1,22 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: proxy-service
+
+feature:
+  newMoviesEnabled: false
+  newUsersEnabled: false
+
+movies:
+  new:
+    base-url: http://movies-service:8081/api/movies
+  legacy:
+    base-url: http://monolith:8080/api/movies
+
+users:
+  new:
+    base-url: http://users-service:8083/api/users
+  legacy:
+    base-url: http://monolith:8080/api/users

@@ -1,56 +1,52 @@
 name: API Tests
 
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+  workflow_run:
+    workflows: ["Docker Build and Push"]
+    types: [completed]
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to run tests against'
-        required: true
-        default: 'docker'
-        type: choice
-        options:
-          - local
-          - docker
-      test_folder:
-        description: 'Test folder to run (leave empty for all)'
-        required: false
-        type: string
+
+permissions:
+  contents: read
+  packages: read
+  actions: read
 
 jobs:
   api-tests:
-    name: Run API Tests
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Docker Compose
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Start services via Docker Compose and wait for readiness
         run: |
-          docker compose --version
-      
-      - name: Start services with Docker Compose
-        run: |
-          docker compose up -d
+          set -eo pipefail
+          set -x  # включить печать команд
+
+          # Обязательно подтягиваем свежие образы
+          docker compose pull
+
+          # Поднимаем стек с принудительным pull (если поддерживается)
+          docker compose up --pull=always -d zookeeper kafka postgres monolith movies-service events-service proxy-service
+          
           # Wait for services to be ready
           echo "Waiting for services to be ready..."
           sleep 120
-      
+
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: tests/postman/package-lock.json
-      
+
       - name: Install Newman and dependencies
         working-directory: tests/postman
         run: npm install
-      
+
       - name: Run API tests
         working-directory: tests/postman
         run: |
@@ -61,11 +57,10 @@ jobs:
           sleep 15
           # Build the Docker image
           docker build -t cinemaabyss-api-tests .
-          
+
           # Run the tests in Docker
           docker run --network=cinemaabyss-network -v "$(pwd)/reports:/app/reports" cinemaabyss-api-tests
-        
-      
-      - name: Stop services
+
+      - name: Tear down
         if: always()
         run: docker compose down

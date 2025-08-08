@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: events-service
+  kafka:
+    bootstrap-servers: kafka:9092
+    consumer:
+      group-id: events-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+
+
+topic:
+  user: events-user
+  payment: events-payment
+  movie: events-movie
+server:
+  port: 8082

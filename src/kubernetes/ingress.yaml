@@ -11,9 +11,59 @@ spec:
     - host: cinemaabyss.example.com
       http:
         paths:
-          #дополните конфигурацию для /
-          ...
+          # Общий входной шлюз / корень — идёт в proxy (например, для UI или маршрутизации)
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: proxy-service
+                port:
+                  number: 8000
+
+          # API пользователей и фильмов через proxy (gateway)
+          - path: /api/users
+            pathType: Prefix
+            backend:
+              service:
+                name: proxy-service
+                port:
+                  number: 8000
+
+          - path: /api/movies
+            pathType: Prefix
+            backend:
+              service:
+                name: proxy-service
+                port:
+                  number: 8000
+
+          # События напрямую к events-service (для тестирования Kafka MVP)
           - path: /api/events
+            pathType: Prefix
+            backend:
+              service:
+                name: events-service
+                port:
+                  number: 8082
+
+          # Хэлсчек-пробросы (если тесты обращаются напрямую)
+          - path: /health
+            pathType: Prefix
+            backend:
+              service:
+                name: proxy-service
+                port:
+                  number: 8000
+
+          - path: /api/movies/health
+            pathType: Prefix
+            backend:
+              service:
+                name: movies-service
+                port:
+                  number: 8081
+
+          - path: /api/events/health
             pathType: Prefix
             backend:
               service:
